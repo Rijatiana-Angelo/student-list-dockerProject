@@ -1,0 +1,56 @@
+version: '3.1'
+services:
+
+#container front end
+  web:
+    image: php:apache
+    depends_on:
+      - api-flask
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+    - USERNAME=toto
+    - PASSWORD=python
+    volumes:
+      - ./website:/var/www/html
+    networks:
+      - pozos-network
+
+#container back end (api python-flask) images build with Docker file : ./simple_api/Dockerfile
+  api-flask: 
+    image: api-flask:v1
+    volumes:
+      - ./simple_api/student_age.json:/data/student_age.json
+    ports:
+      - "5000:5000"
+    container_name: api-student
+    networks:
+      - pozos-network
+
+#private registry back end
+  registry:
+    image: registry:2
+    ports:
+      - "5050:5000"
+    container_name: registry-back
+    networks:
+      - registry-network
+
+#user interface for private registry
+  registry-ui:
+    depends_on:
+      - registry
+    image: joxit/docker-registry-ui
+    ports:
+      - "8080:80"
+    container_name: registry-ui
+    environment:
+      - REGISTRY_TITLE="Angelo REGISTRY"
+      - REGISTRY_URL="http://192.168.0.108:5050"
+    networks:
+      - registry-network
+
+networks:
+  pozos-network:
+  registry-network:
